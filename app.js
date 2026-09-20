@@ -8,7 +8,9 @@ const tempoValue = document.querySelector("#tempoValue");
 const progressBar = document.querySelector("#progressBar");
 const exerciseNumber = document.querySelector("#exerciseNumber");
 
-const melodyPool = [60, 62, 64, 65, 67, 69, 71, 72, 74];
+const MIN_NOTE = 60; // C4
+const MAX_NOTE = 84; // C6
+const melodyPool = [60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79, 81, 83, 84];
 const roots = [
   { name: "C", midi: 0 }, { name: "C♯", midi: 1 }, { name: "D", midi: 2 },
   { name: "D♯", midi: 3 }, { name: "E", midi: 4 }, { name: "F", midi: 5 },
@@ -29,21 +31,20 @@ function randomItem(items) { return items[Math.floor(Math.random() * items.lengt
 
 function createPhrase() {
   let previous = randomItem(melodyPool);
-  let currentChord;
-  return Array.from({ length: 32 }, (_, index) => {
+  return Array.from({ length: 16 }, (_, index) => {
     const nearby = melodyPool.filter(note => Math.abs(note - previous) <= 5);
-    const melody = index % 8 === 0 ? randomItem(melodyPool.slice(0, 6)) : randomItem(nearby);
+    const melody = index % 4 === 0 ? randomItem(melodyPool) : randomItem(nearby);
     previous = melody;
-    if (index % 2 === 0) {
-      const root = randomItem(roots);
-      const quality = randomItem(chordQualities);
-      currentChord = {
-        name: `${root.name}${quality.suffix}`,
-        tones: quality.intervals.map(interval => root.midi + interval),
-      };
-    }
+    const root = randomItem(roots);
+    const quality = randomItem(chordQualities);
+    const currentChord = {
+      name: `${root.name}${quality.suffix}`,
+      tones: quality.intervals.map(interval => root.midi + interval),
+    };
     const candidates = [];
-    for (let midi = melody - 12; midi <= melody + 12; midi += 1) {
+    const lowestCandidate = Math.max(MIN_NOTE, melody - 12);
+    const highestCandidate = Math.min(MAX_NOTE, melody + 12);
+    for (let midi = lowestCandidate; midi <= highestCandidate; midi += 1) {
       if (currentChord.tones.some(tone => (midi - tone + 120) % 12 === 0)) candidates.push(midi);
     }
     const lower = candidates.filter(note => note < melody);
@@ -76,6 +77,11 @@ function drawNote(x, midi, color, stemUp = true) {
       score.append(svgElement("line", { x1: x - 11, y1: ledgerY, x2: x + 11, y2: ledgerY, stroke: color, "stroke-width": .85 }));
     }
   }
+  if (y < 111) {
+    for (let ledgerY = 104; ledgerY >= y - 2; ledgerY -= 14) {
+      score.append(svgElement("line", { x1: x - 11, y1: ledgerY, x2: x + 11, y2: ledgerY, stroke: color, "stroke-width": .85 }));
+    }
+  }
   if ([1, 3, 6, 8, 10].includes(pc)) {
     score.append(svgElement("text", { x: x - 15, y: y + 5, fill: color, "font-size": 16, "font-family": "serif" }, "♯"));
   }
@@ -97,19 +103,15 @@ function renderScore() {
   score.append(svgElement("text", { x: 86, y: 170, fill: "#1e2925", "font-size": 28, "font-family": "serif", "text-anchor": "middle" }, "4"));
 
   phrase.forEach((note, index) => {
-    const x = 122 + index * 31.4;
-    const isBeat = index % 2 === 0;
-    if (isBeat) score.append(svgElement("line", { x1: x, y1: 99, x2: x, y2: 189, stroke: "#d7d2c7", "stroke-width": .55, "stroke-dasharray": "2 4" }));
-    if (index % 2 === 0) {
-      const chordCenterX = x + 15.7;
-      score.append(svgElement("text", { x: chordCenterX, y: 80, fill: "#1e2925", "font-size": 12, "font-weight": 600, "text-anchor": "middle", "font-family": "Noto Sans JP, sans-serif" }, note.chord));
-    }
+    const x = 137.7 + index * 62.8;
+    score.append(svgElement("line", { x1: x, y1: 99, x2: x, y2: 189, stroke: "#d7d2c7", "stroke-width": .55, "stroke-dasharray": "2 4" }));
+    score.append(svgElement("text", { x, y: 80, fill: "#1e2925", "font-size": 12, "font-weight": 600, "text-anchor": "middle", "font-family": "Noto Sans JP, sans-serif" }, note.chord));
     drawNote(x, note.melody, "#1e2925", true);
     drawNote(x, note.harmony, "#718f79", false);
-    if ((index + 1) % 8 === 0) {
-      const barX = x + 16;
-      score.append(svgElement("line", { x1: barX, y1: staffStart, x2: barX, y2: staffStart + 56, stroke: "#1e2925", "stroke-width": index === 31 ? 3 : 1.4 }));
-      score.append(svgElement("text", { x: barX - 8, y: 228, fill: "#9b9e98", "font-size": 9, "text-anchor": "end" }, String((index + 1) / 8)));
+    if ((index + 1) % 4 === 0) {
+      const barX = x + 31.4;
+      score.append(svgElement("line", { x1: barX, y1: staffStart, x2: barX, y2: staffStart + 56, stroke: "#1e2925", "stroke-width": index === 15 ? 3 : 1.4 }));
+      score.append(svgElement("text", { x: barX - 8, y: 228, fill: "#9b9e98", "font-size": 9, "text-anchor": "end" }, String((index + 1) / 4)));
     }
   });
   score.append(svgElement("text", { x: 28, y: 292, fill: "#68716c", "font-size": 11 }, "右手：メロディー　　左手：グリーンのコード構成音"));
@@ -140,14 +142,14 @@ function playTone(midi, start, duration, gainValue) {
 function togglePlayback() {
   if (timers.length) return stopPlayback();
   audioContext ||= new AudioContext();
-  const eighth = 30 / Number(tempo.value);
+  const beat = 60 / Number(tempo.value);
   const now = audioContext.currentTime + .05;
   phrase.forEach((note, index) => {
-    playTone(note.melody, now + index * eighth, eighth * .82, .08);
-    playTone(note.harmony, now + index * eighth, eighth * .82, .045);
-    timers.push(setTimeout(() => { progressBar.style.width = `${((index + 1) / phrase.length) * 100}%`; }, index * eighth * 1000));
+    playTone(note.melody, now + index * beat, beat * .82, .08);
+    playTone(note.harmony, now + index * beat, beat * .82, .045);
+    timers.push(setTimeout(() => { progressBar.style.width = `${((index + 1) / phrase.length) * 100}%`; }, index * beat * 1000));
   });
-  timers.push(setTimeout(stopPlayback, phrase.length * eighth * 1000 + 100));
+  timers.push(setTimeout(stopPlayback, phrase.length * beat * 1000 + 100));
   playLabel.textContent = "停止する";
   playButton.querySelector("span").textContent = "■";
 }
