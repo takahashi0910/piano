@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
+:root {
+  --paper: #f4f0e7;
+  --ink: #1e2925;
+  --muted: #68716c;
+  --sage: #718f79;
+  --sage-dark: #4e6d58;
+  --clay: #c47d5b;
+  --line: #d7d2c7;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Noto Sans JP", sans-serif;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(113, 143, 121, .09), transparent 30%),
+    linear-gradient(rgba(30, 41, 37, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 41, 37, .025) 1px, transparent 1px),
+    var(--paper);
+  background-size: auto, 24px 24px, 24px 24px, auto;
+}
+
+.app-shell { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: 64px 0 42px; }
+.hero { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 36px; }
+.eyebrow, .section-number { margin: 0 0 8px; color: var(--sage-dark); font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+h1 { margin: 0; font: 400 clamp(48px, 7vw, 82px)/.95 "DM Serif Display", serif; letter-spacing: -.03em; }
+.intro { margin: 18px 0 0; color: var(--muted); font-size: 14px; }
+.time-signature { display: flex; flex-direction: column; padding: 8px 20px; border-left: 1px solid var(--ink); font: 400 40px/.72 "DM Serif Display", serif; }
+
+.control-panel { display: flex; align-items: center; gap: 28px; padding: 22px 26px; margin-bottom: 22px; background: var(--ink); color: white; }
+button { font: inherit; cursor: pointer; }
+.primary-button, .play-button { border: 0; white-space: nowrap; }
+.primary-button { padding: 14px 20px; background: var(--clay); color: white; font-weight: 700; }
+.primary-button:hover { background: #d08a67; }
+.button-icon { display: inline-block; margin-right: 9px; font-size: 19px; transition: transform .35s; }
+.primary-button:hover .button-icon { transform: rotate(90deg); }
+.tempo-control { display: grid; grid-template-columns: auto minmax(120px, 1fr) 72px; align-items: center; gap: 13px; flex: 1; }
+.tempo-control label { font-size: 10px; letter-spacing: .16em; }
+.tempo-control output { color: #d9dedb; font-size: 12px; }
+input[type="range"] { width: 100%; accent-color: var(--clay); }
+.play-button { padding: 13px 18px; background: transparent; color: white; border: 1px solid #65706b; }
+.play-button span:first-child { margin-right: 8px; color: var(--clay); }
+
+.score-card { background: #fffdf8; border: 1px solid var(--line); box-shadow: 0 22px 60px rgba(30, 41, 37, .08); }
+.score-heading { display: flex; align-items: flex-end; justify-content: space-between; padding: 27px 34px 22px; border-bottom: 1px solid var(--line); }
+.score-heading h2 { margin: 0; font: 400 28px/1 "DM Serif Display", serif; }
+.section-number span { color: var(--clay); }
+.score-meta { display: flex; gap: 8px; }
+.score-meta span { padding: 5px 9px; border: 1px solid var(--line); color: var(--muted); font-size: 10px; letter-spacing: .04em; }
+.score-scroll { overflow-x: auto; padding: 6px 18px 0; }
+#score { display: block; min-width: 1060px; width: 100%; height: auto; }
+.play-progress { height: 3px; background: #ece8de; }
+.play-progress span { display: block; width: 0; height: 100%; background: var(--clay); transition: width .1s linear; }
+.legend { display: flex; gap: 24px; padding: 16px 34px 20px; color: var(--muted); font-size: 11px; }
+.legend span:last-child { margin-left: auto; }
+.dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; }
+.melody-dot { background: var(--ink); }
+.harmony-dot { background: var(--sage); }
+.hint { margin: 17px 0 0; text-align: center; color: var(--muted); font-size: 11px; }
+kbd { padding: 2px 6px; border: 1px solid #c7c2b7; border-radius: 3px; background: #fffdf8; font-family: inherit; font-size: 10px; }
+
+@media (max-width: 760px) {
+  .app-shell { width: min(100% - 24px, 1240px); padding-top: 34px; }
+  .hero { align-items: center; }
+  .time-signature { display: none; }
+  .control-panel { flex-wrap: wrap; gap: 16px; }
+  .tempo-control { order: 3; flex-basis: 100%; }
+  .primary-button, .play-button { flex: 1; }
+  .score-heading { align-items: flex-start; padding: 22px; }
+  .score-meta { display: none; }
+  .legend { padding: 15px 22px; flex-wrap: wrap; gap: 10px 20px; }
+  .legend span:last-child { width: 100%; margin-left: 0; }
+}
