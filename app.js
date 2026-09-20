@@ -10,12 +10,16 @@ const exerciseNumber = document.querySelector("#exerciseNumber");
 
 const melodyPool = [60, 62, 64, 65, 67, 69, 71, 72, 74];
 const roots = [
-  { name: "C7", midi: 0 }, { name: "C♯7", midi: 1 }, { name: "D7", midi: 2 },
-  { name: "D♯7", midi: 3 }, { name: "E7", midi: 4 }, { name: "F7", midi: 5 },
-  { name: "F♯7", midi: 6 }, { name: "G7", midi: 7 }, { name: "G♯7", midi: 8 },
-  { name: "A7", midi: 9 }, { name: "A♯7", midi: 10 }, { name: "B7", midi: 11 },
+  { name: "C", midi: 0 }, { name: "C♯", midi: 1 }, { name: "D", midi: 2 },
+  { name: "D♯", midi: 3 }, { name: "E", midi: 4 }, { name: "F", midi: 5 },
+  { name: "F♯", midi: 6 }, { name: "G", midi: 7 }, { name: "G♯", midi: 8 },
+  { name: "A", midi: 9 }, { name: "A♯", midi: 10 }, { name: "B", midi: 11 },
 ];
-const pitchNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const chordQualities = [
+  { suffix: "7", intervals: [0, 4, 7, 10] },
+  { suffix: "M7", intervals: [0, 4, 7, 11] },
+  { suffix: "m7", intervals: [0, 3, 7, 10] },
+];
 let phrase = [];
 let runNumber = 1;
 let timers = [];
@@ -25,19 +29,26 @@ function randomItem(items) { return items[Math.floor(Math.random() * items.lengt
 
 function createPhrase() {
   let previous = randomItem(melodyPool);
+  let currentChord;
   return Array.from({ length: 32 }, (_, index) => {
     const nearby = melodyPool.filter(note => Math.abs(note - previous) <= 5);
     const melody = index % 8 === 0 ? randomItem(melodyPool.slice(0, 6)) : randomItem(nearby);
     previous = melody;
-    const chord = randomItem(roots);
-    const chordTones = [0, 4, 7, 10].map(interval => chord.midi + interval);
+    if (index % 2 === 0) {
+      const root = randomItem(roots);
+      const quality = randomItem(chordQualities);
+      currentChord = {
+        name: `${root.name}${quality.suffix}`,
+        tones: quality.intervals.map(interval => root.midi + interval),
+      };
+    }
     const candidates = [];
     for (let midi = melody - 12; midi <= melody + 12; midi += 1) {
-      if (chordTones.some(tone => (midi - tone + 120) % 12 === 0)) candidates.push(midi);
+      if (currentChord.tones.some(tone => (midi - tone + 120) % 12 === 0)) candidates.push(midi);
     }
     const lower = candidates.filter(note => note < melody);
     const harmony = randomItem(lower.length ? lower : candidates);
-    return { melody, harmony, chord: chord.name };
+    return { melody, harmony, chord: currentChord.name };
   });
 }
 
@@ -89,7 +100,10 @@ function renderScore() {
     const x = 122 + index * 31.4;
     const isBeat = index % 2 === 0;
     if (isBeat) score.append(svgElement("line", { x1: x, y1: 99, x2: x, y2: 189, stroke: "#d7d2c7", "stroke-width": .55, "stroke-dasharray": "2 4" }));
-    score.append(svgElement("text", { x, y: 80 - (index % 2) * 13, fill: index % 2 ? "#68716c" : "#1e2925", "font-size": 11, "font-weight": 600, "text-anchor": "middle", "font-family": "Noto Sans JP, sans-serif" }, note.chord));
+    if (index % 2 === 0) {
+      const chordCenterX = x + 15.7;
+      score.append(svgElement("text", { x: chordCenterX, y: 80, fill: "#1e2925", "font-size": 12, "font-weight": 600, "text-anchor": "middle", "font-family": "Noto Sans JP, sans-serif" }, note.chord));
+    }
     drawNote(x, note.melody, "#1e2925", true);
     drawNote(x, note.harmony, "#718f79", false);
     if ((index + 1) % 8 === 0) {
